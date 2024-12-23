@@ -26,4 +26,12 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
         assertEquals(0, body["deliveryFee"])
     }
 
+    @Test
+    fun `small order surcharge applied for cart value below 10 euros`() {
+        val request = CartRequest(cartValue = 500, deliveryDistance = 500, numberOfItems = 2, time = "2024-02-21T14:40:00Z")
+        val (status, body) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        assertEquals(700, body["deliveryFee"]) // 500 surcharge + 200 base fee = 700
+    }
+
 }
