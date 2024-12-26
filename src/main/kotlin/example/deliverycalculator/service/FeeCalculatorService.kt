@@ -2,7 +2,10 @@ package example.deliverycalculator.service
 
 import example.deliverycalculator.model.CartRequest
 import org.springframework.stereotype.Service
+import java.time.DayOfWeek
+import java.time.ZonedDateTime
 import kotlin.math.ceil
+import kotlin.math.min
 
 @Service
 class FeeCalculatorService {
@@ -17,6 +20,8 @@ class FeeCalculatorService {
         const val ITEM_SURCHARGE = 50 // 50 cents per additional item starting from the 5th
         const val BULK_ITEM_SURCHARGE_THRESHOLD = 13 // Bulk surcharge threshold
         const val BULK_ITEM_SURCHARGE = 120 // 1.20 euros for more than 12 items
+        const val MAX_DELIVERY_FEE = 1500 // 15 euros in cents
+        const val RUSH_HOUR_MULTIPLIER = 1.2 // 1.2x multiplier during rush hours
     }
 
     fun calculateDeliveryFee(request: CartRequest): Int {
@@ -34,7 +39,13 @@ class FeeCalculatorService {
         // Add distance-based fee
         deliveryFee += calculateItemSurcharge(request.numberOfItems)
 
-        return deliveryFee
+
+        // Apply rush hour multiplier if applicable
+        if (isRushHour(request.time)) {
+            deliveryFee = (deliveryFee * RUSH_HOUR_MULTIPLIER).toInt()
+        }
+
+        return min(deliveryFee, MAX_DELIVERY_FEE)
     }
 
     private fun calculateFreeDelivery(cartValue: Int): Int {
@@ -63,5 +74,11 @@ class FeeCalculatorService {
             itemSurcharge += BULK_ITEM_SURCHARGE
         }
         return itemSurcharge
+    }
+
+    private fun isRushHour(timeString: String): Boolean {
+        val dateTime = ZonedDateTime.parse(timeString)
+        return dateTime.dayOfWeek == DayOfWeek.FRIDAY &&
+                dateTime.hour in 15..18 // 15:00-19:00 (3 PM - 7 PM)
     }
 }

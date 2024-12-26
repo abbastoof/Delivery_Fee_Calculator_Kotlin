@@ -72,4 +72,73 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
         assertEquals(250, deliveryFee) // 200 base fee + 50 cents for the 5th item
     }
 
+    @Test
+    fun `bulk fee for more than 12 items`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 500, numberOfItems = 13, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(770, deliveryFee) // 200 base fee + Total item surcharge (450 + 120 = 570 cents) = 770
+    }
+
+    @Test
+    fun `rush hour multiplier applied during Friday rush hours`() {
+        val request = CartRequest(
+            cartValue = 1000,
+            deliveryDistance = 1500,
+            numberOfItems = 5,
+            time = "2024-02-23T16:00:00Z" // Friday at 4 PM UTC
+        )
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        // Base calculation: 200 (base) + 100 (distance) + 50 (items) = 350
+        // After 1.2x multiplier = 420
+        assertEquals(420, deliveryFee)
+    }
+
+    @Test
+    fun `no rush hour multiplier outside Friday rush hours`() {
+        val request = CartRequest(
+            cartValue = 1000,
+            deliveryDistance = 1500,
+            numberOfItems = 5,
+            time = "2024-02-23T14:00:00Z" // Friday at 2 PM UTC (before rush hour)
+        )
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        // Base calculation: 200 (base) + 100 (distance) + 50 (items) = 350
+        assertEquals(350, deliveryFee)
+    }
+
+    @Test
+    fun `maximum fee limit applied`() {
+        val request = CartRequest(
+            cartValue = 1000,
+            deliveryDistance = 10000, // 10km
+            numberOfItems = 15,        // Many items to generate high fee
+            time = "2024-02-23T16:00:00Z" // During rush hour to maximize fee
+        )
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(1500, deliveryFee) // Should be capped at 15€ (1500 cents)
+    }
+
+    @Test
+    fun `rush hour on non-Friday does not apply multiplier`() {
+        val request = CartRequest(
+            cartValue = 1000,
+            deliveryDistance = 1500,
+            numberOfItems = 5,
+            time = "2024-02-22T16:00:00Z" // Thursday at 4 PM UTC
+        )
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        // Base calculation: 200 (base) + 100 (distance) + 50 (items) = 350
+        assertEquals(350, deliveryFee)
+    }
+
 }
