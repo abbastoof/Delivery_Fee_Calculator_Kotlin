@@ -4,8 +4,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class DeliverycalculatorApplication
+class DeliveryCalculatorApplication
 
 fun main(args: Array<String>) {
-	runApplication<DeliverycalculatorApplication>(*args)
+	runApplication<DeliveryCalculatorApplication>(*args)
 }

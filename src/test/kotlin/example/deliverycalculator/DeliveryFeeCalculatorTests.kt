@@ -63,5 +63,13 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
         assertEquals(400, deliveryFee) // Base 200 + 1 euro for each extra 500m
     }
 
+    @Test
+    fun `item surcharge for 5 more items`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 500, numberOfItems = 5, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(250, deliveryFee) // 200 base fee + 50 cents for the 5th item
+    }
 
 }

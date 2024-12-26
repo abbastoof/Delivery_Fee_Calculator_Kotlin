@@ -13,6 +13,10 @@ class FeeCalculatorService {
         const val BASE_DELIVERY_FEE = 200 // Base fee in cents
         const val ADDITIONAL_DISTANCE_UNIT = 500 // Additional fee per 500 meters
         const val ADDITIONAL_DISTANCE_FEE = 100 // 1 euro per additional 500 meters
+        const val ITEM_SURCHARGE_THRESHOLD = 5 // Surcharge starts from the 5th item
+        const val ITEM_SURCHARGE = 50 // 50 cents per additional item starting from the 5th
+        const val BULK_ITEM_SURCHARGE_THRESHOLD = 13 // Bulk surcharge threshold
+        const val BULK_ITEM_SURCHARGE = 120 // 1.20 euros for more than 12 items
     }
 
     fun calculateDeliveryFee(request: CartRequest): Int {
@@ -26,6 +30,9 @@ class FeeCalculatorService {
 
         // Add distance-based fee
         deliveryFee += calculateDistanceFee(request.deliveryDistance)
+
+        // Add distance-based fee
+        deliveryFee += calculateItemSurcharge(request.numberOfItems)
 
         return deliveryFee
     }
@@ -43,5 +50,18 @@ class FeeCalculatorService {
         // To calculate the "extra distance" beyond the first kilometer, we subtract 1000 from the total distance.
         val extraMeters = distance - 1000
         return ceil(extraMeters / ADDITIONAL_DISTANCE_UNIT.toDouble()).toInt() * ADDITIONAL_DISTANCE_FEE
+    }
+
+    private fun calculateItemSurcharge(numberOfItems: Int): Int {
+        if (numberOfItems < ITEM_SURCHARGE_THRESHOLD) return 0
+
+        val extraItems = numberOfItems - ITEM_SURCHARGE_THRESHOLD + 1 // Include 5th item
+        var itemSurcharge = extraItems * ITEM_SURCHARGE
+
+        // Add bulk surcharge if items are greater than or equal to the bulk threshold
+        if (numberOfItems >= BULK_ITEM_SURCHARGE_THRESHOLD) {
+            itemSurcharge += BULK_ITEM_SURCHARGE
+        }
+        return itemSurcharge
     }
 }
