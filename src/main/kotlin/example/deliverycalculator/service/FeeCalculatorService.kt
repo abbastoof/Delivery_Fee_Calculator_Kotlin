@@ -8,7 +8,7 @@ import kotlin.math.ceil
 import kotlin.math.min
 
 @Service
-class FeeCalculatorService {
+class  FeeCalculatorService {
 
     companion object {
         const val FREE_DELIVERY_THRESHOLD = 20000 // 200 euros in cents
@@ -25,6 +25,7 @@ class FeeCalculatorService {
     }
 
     fun calculateDeliveryFee(request: CartRequest): Int {
+
         var deliveryFee = 0
 
         // Apply free delivery threshold

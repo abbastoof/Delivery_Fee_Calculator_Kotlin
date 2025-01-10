@@ -18,7 +18,6 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
     private fun postRequest(request: CartRequest): Pair<HttpStatusCode, DocumentContext> {
         // Make the POST request
         val response = restTemplate.postForEntity(baseUrl, request, String::class.java)
-
         // Parse the JSON response body
         val documentContext = JsonPath.parse(response.body ?: "{}")
 
@@ -140,5 +139,39 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
         // Base calculation: 200 (base) + 100 (distance) + 50 (items) = 350
         assertEquals(350, deliveryFee)
     }
+
+    @Test
+    fun `invalid cart value returns bad request`() {
+        val request = CartRequest(
+            cartValue = -10,
+            deliveryDistance = 500,
+            numberOfItems = 2,
+            time = "2024-02-21T14:40:00Z"
+        )
+        val (status, documentContext) = postRequest(request)
+
+        // Assert that the status is Bad Request (HTTP 400)
+        assertEquals(HttpStatus.BAD_REQUEST, status)
+
+        // Assert that the error message is as expected
+        val errorMessage: String = documentContext.read("$.cartValue")
+        assertEquals("Cart value must be greater than 0", errorMessage)
+    }
+
+//    @Test
+//    fun `invalid time format returns bad request`() {
+//        val request = CartRequest(
+//            cartValue = 1000,
+//            deliveryDistance = 500,
+//            numberOfItems = 2,
+//            time = "invalid-time"
+//        )
+//        val (status, documentContext) = postRequest(request)
+//
+//        assertEquals(HttpStatus.BAD_REQUEST, status)
+//        // Assert that the error message is as expected
+//        val errorMessage: String = documentContext.read("$.time")
+//        assertEquals("Time must be provided in ISO 8601 format", errorMessage)
+//    }
 
 }
