@@ -1,9 +1,11 @@
 package example.deliverycalculator.service
 
+import example.deliverycalculator.exception.InvalidTimeFormatException
 import example.deliverycalculator.model.CartRequest
 import org.springframework.stereotype.Service
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 import kotlin.math.ceil
 import kotlin.math.min
 
@@ -78,8 +80,11 @@ class  FeeCalculatorService {
     }
 
     private fun isRushHour(timeString: String): Boolean {
-        val dateTime = ZonedDateTime.parse(timeString)
-        return dateTime.dayOfWeek == DayOfWeek.FRIDAY &&
-                dateTime.hour in 15..18 // 15:00-19:00 (3 PM - 7 PM)
+        try {
+            val dateTime = ZonedDateTime.parse(timeString)
+            return dateTime.dayOfWeek == DayOfWeek.FRIDAY && dateTime.hour in 15..18
+        } catch (e: DateTimeParseException) {
+            throw InvalidTimeFormatException("${e.message}")
+        }
     }
 }

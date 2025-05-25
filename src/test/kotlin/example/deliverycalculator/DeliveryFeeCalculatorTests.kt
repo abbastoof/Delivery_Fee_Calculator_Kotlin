@@ -158,20 +158,71 @@ class DeliveryFeeCalculatorTests(@Autowired val restTemplate: TestRestTemplate) 
         assertEquals("Cart value must be greater than 0", errorMessage)
     }
 
-//    @Test
-//    fun `invalid time format returns bad request`() {
-//        val request = CartRequest(
-//            cartValue = 1000,
-//            deliveryDistance = 500,
-//            numberOfItems = 2,
-//            time = "invalid-time"
-//        )
-//        val (status, documentContext) = postRequest(request)
-//
-//        assertEquals(HttpStatus.BAD_REQUEST, status)
-//        // Assert that the error message is as expected
-//        val errorMessage: String = documentContext.read("$.time")
-//        assertEquals("Time must be provided in ISO 8601 format", errorMessage)
-//    }
+    @Test
+    fun `invalid time format returns bad request`() {
+        val request = CartRequest(
+            cartValue = 1000,
+            deliveryDistance = 500,
+            numberOfItems = 2,
+            time = "invalid-time"
+        )
+        val (status, documentContext) = postRequest(request)
+
+        assertEquals(HttpStatus.BAD_REQUEST, status)
+        // Assert that the error message is as expected
+        val errorMessage: String = documentContext.read("$.time")
+        assertEquals("Time must be provided in ISO 8601 format", errorMessage)
+    }
+
+    @Test
+    fun `distance just over 1km adds one distance surcharge`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 1001, numberOfItems = 2, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(300, deliveryFee) // 200 base + 100 distance
+    }
+
+
+    @Test
+    fun `distance just below 1_500 only adds one distance surcharge`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 1249, numberOfItems = 2, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(300, deliveryFee) // 200 base + 100 distance
+    }
+
+
+    @Test
+    fun `no item surcharge for 4 items`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 500, numberOfItems = 4, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(200, deliveryFee) // Base only, no item surcharge
+    }
+
+
+    @Test
+    fun `item surcharge without bulk fee for 12 items`() {
+        val request = CartRequest(cartValue = 1000, deliveryDistance = 500, numberOfItems = 12, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        // From item 5 to 12 => 8 items × 50 = 400 + 200 base
+        assertEquals(600, deliveryFee)
+    }
+
+    @Test
+    fun `cart value just under free delivery threshold charges base fee`() {
+        val request = CartRequest(cartValue = 19999, deliveryDistance = 500, numberOfItems = 2, time = "2024-02-21T14:40:00Z")
+        val (status, documentContext) = postRequest(request)
+        assertEquals(HttpStatus.OK, status)
+        val deliveryFee: Int = documentContext.read("$.deliveryFee")
+        assertEquals(200, deliveryFee) // Not free, still base delivery fee
+    }
+
+
 
 }

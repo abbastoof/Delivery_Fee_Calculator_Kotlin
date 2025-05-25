@@ -14,4 +14,10 @@ class GlobalExceptionHandler {
         val errors = ex.bindingResult.fieldErrors.associate { it.field to (it.defaultMessage ?: "Invalid value") }
         return ResponseEntity(errors, HttpStatus.BAD_REQUEST)
     }
+
+    @ExceptionHandler(InvalidTimeFormatException::class)
+    fun handleInvalidTimeFormatException(ex: InvalidTimeFormatException): ResponseEntity<Map<String, String>> {
+        val error = mapOf("time" to (ex.message ?: "Invalid time format"))
+        return ResponseEntity(error, HttpStatus.BAD_REQUEST)
+    }
 }
