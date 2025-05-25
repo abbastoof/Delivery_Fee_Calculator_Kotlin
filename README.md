@@ -68,8 +68,7 @@ src/test/kotlin/example/deliverycalculator/
 ```
 
 ## Getting Started
-**Local Build & Run (Without Docker)
-**
+**Local Build & Run (Without Docker)**
 
 ```bash
 # Build and run
