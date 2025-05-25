@@ -7,6 +7,7 @@ This REST API intelligently calculates delivery fees by considering multiple fac
 ## Technology Stack
 
 - **Kotlin** + **Spring Boot** - Core framework
+- **Docker** - Containerization and deployment
 - **Bean Validation** - Input validation
 - **JUnit 5** + **JSONPath** - Testing
 - **Gradle** - Build tool
