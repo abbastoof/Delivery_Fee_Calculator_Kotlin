@@ -68,6 +68,8 @@ src/test/kotlin/example/deliverycalculator/
 ```
 
 ## Getting Started
+**Local Build & Run (Without Docker)
+**
 
 ```bash
 # Build and run
@@ -80,8 +82,39 @@ src/test/kotlin/example/deliverycalculator/
 # API available at: http://localhost:8080/api/1/fee
 ```
 
-## Example Usage
+### Using Docker
 
+To streamline deployment, the project now includes a **Dockerfile**, **docker-compose.yml**, and a **Makefile** for simplified commands.
+
+* **Dockerfile**: Containerizes the Kotlin Spring Boot app with a minimal Alpine base and BellSoft JDK.
+* **docker-compose.yml**: Manages container lifecycle and port mapping.
+* **Makefile**: Automates build, run, and clean tasks.
+
+---
+
+### Docker Build & Run with Makefile
+
+```bash
+# Build the app and Docker image, then start the container
+make
+
+# Stop and remove container and image
+make clean
+```
+
+### Manual Docker Commands
+
+If you prefer not to use the Makefile, here is how you can build and run manually:
+
+```bash
+# Build Docker image
+docker build -t delivery_fee .
+
+# Run container mapping port 8080
+docker run -p 8080:8080 delivery_fee
+```
+
+---
 ### Basic Request
 ```bash
 curl -X POST http://localhost:8080/api/1/fee \
